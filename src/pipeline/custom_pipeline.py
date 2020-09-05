@@ -1,6 +1,6 @@
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
-from src.config.config import GENDER_CAT, GEOGRAPHY_CAT
+from config.config import GENDER_CAT, GEOGRAPHY_CAT
 
 
 class ColumnSelector(BaseEstimator, TransformerMixin):

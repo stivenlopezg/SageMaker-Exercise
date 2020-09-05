@@ -5,10 +5,10 @@ import argparse
 import numpy as np
 import pandas as pd
 from io import StringIO
-from src.config import config as cfg
+from config import config as cfg
 from sklearn.externals import joblib
 from sklearn.pipeline import Pipeline
-from src.pipeline.custom_pipeline import ColumnSelector, ConvertDtypes, GetDummies
+from pipeline.custom_pipeline import ColumnSelector, ConvertDtypes, GetDummies
 from sagemaker_containers.beta.framework import encoders, worker
 
 
@@ -27,13 +27,13 @@ def main():
                          f'the data specification in S3 was incorrectly specified or the role specified\n'
                          f'does not have permission to acces the data.')
     raw_data = [pd.read_csv(file, names=cfg.FEATURES + [cfg.LABEL],
-                            sep=',', dtype=cfg.FEATURES_DTYPES.update(cfg.LABEL_DTYPE)) for file in input_files]
+                            sep=';', dtype=cfg.FEATURES_DTYPES.update(cfg.LABEL_DTYPE)) for file in input_files]
     data = pd.concat(raw_data)
     # Build Pipeline
     preprocessor = Pipeline(steps=[
         ('dtypes', ConvertDtypes(numerical=cfg.NUMERICAL_FEATURES, categorical=cfg.CATEGORICAL_FEATURES)),
         ('selector', ColumnSelector(columns=cfg.FEATURES[3:])),
-        ('ohe', GetDummies(columns=cfg.CATEGORICAL_FEATURES))
+        ('ohe', GetDummies(columns=cfg.CATEGORICAL_FEATURES)),
     ])
     preprocessor.fit(data)
     joblib.dump(preprocessor, filename=os.path.join(args.model_dir, 'preprocessor.joblib'))
@@ -59,7 +59,7 @@ def input_fn(input_data, content_type):
     :return:
     """
     if content_type == 'text/csv':
-        df = pd.read_csv(StringIO(input_data), sep=',', header=None)
+        df = pd.read_csv(StringIO(input_data), sep=';', header=None)
         if len(df.columns) == len(cfg.FEATURES) + 1:
             df.columns = cfg.FEATURES + [cfg.LABEL]
         elif len(df.columns) == len(cfg.FEATURES):
