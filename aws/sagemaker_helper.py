@@ -1,6 +1,23 @@
+import boto3
 import sagemaker
 from sagemaker.sklearn import SKLearn
 from sagemaker.amazon.amazon_estimator import get_image_uri
+
+
+def calculate_prediction(data: str, endpoint_name: str = 'churn-score-slg'):
+    """
+
+    :param data:
+    :param endpoint_name:
+    :return:
+    """
+    sagemaker_client = boto3.client('sagemaker-runtime', 'us-east-1')
+    response = sagemaker_client.invoke_endpoint(EndpointName=endpoint_name,
+                                                Body=data,
+                                                ContentType='text/csv',
+                                                Accept='text/csv')
+    score = round(float(response['Body'].read().decode('utf-8')), 3) * 100
+    return score
 
 
 def sklearn_preprocessor(entry_point: str, role: str, output_dir: str, instance_type: str = 'ml.m4.xlarge'):
